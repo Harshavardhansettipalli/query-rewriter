@@ -1,0 +1,11 @@
+# Runtime dependencies. Install with: pip install -r requirements.txt
+fastapi>=0.110,<1.0
+uvicorn[standard]>=0.29,<1.0
+sqlalchemy>=2.0,<3.0
+pydantic>=2.6,<3.0
+pydantic-settings>=2.2,<3.0
+openai>=1.40,<4.0
+pyspellchecker>=0.8,<1.0
+
+# Uncomment when using PostgreSQL (for example Amazon RDS):
+# psycopg[binary]>=3.1,<4.0

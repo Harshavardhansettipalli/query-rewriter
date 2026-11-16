@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Search Query Rewriter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <h1 class="brand">Query Rewriter</h1>
+      <div class="profile-picker">
+        <label for="profile-select">Profile</label>
+        <select id="profile-select"></select>
+      </div>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button role="tab" id="tab-search" aria-controls="panel-search" aria-selected="true">Search</button>
+    <button role="tab" id="tab-profile" aria-controls="panel-profile" aria-selected="false">Profile</button>
+    <button role="tab" id="tab-activity" aria-controls="panel-activity" aria-selected="false">Activity</button>
+    <button role="tab" id="tab-history" aria-controls="panel-history" aria-selected="false">History</button>
+  </nav>
+
+  <main>
+    <div id="ai-banner" class="banner" hidden></div>
+
+    <!-- ============================== Search ============================== -->
+    <section id="panel-search" role="tabpanel" aria-labelledby="tab-search">
+      <form id="search-form" class="search" autocomplete="off">
+        <label for="query-input" class="visually-hidden">Search query</label>
+        <input id="query-input" type="search" maxlength="300" placeholder="What are you looking for?" required>
+        <button type="submit" id="rewrite-btn" class="btn primary">Check query</button>
+      </form>
+      <p id="search-error" class="error" role="alert" hidden></p>
+      <p id="no-profile-hint" class="hint" hidden>Create a profile first so suggestions can use your role, interests and activity.</p>
+
+      <div id="loading" class="loading" hidden aria-live="polite">
+        <span class="spinner" aria-hidden="true"></span>
+        <span>Checking spelling and context…</span>
+      </div>
+
+      <article id="result" class="result" hidden aria-live="polite">
+        <p id="result-status" class="result-status"></p>
+        <p id="notice" class="notice" hidden></p>
+
+        <div id="diff" class="diff" aria-label="Suggested query"></div>
+        <div id="edit-box" hidden>
+          <label for="edit-input" class="field-label">Edit the query</label>
+          <textarea id="edit-input" rows="2" maxlength="300"></textarea>
+        </div>
+
+        <p id="explanation" class="explanation"></p>
+
+        <dl id="facts" class="facts"></dl>
+
+        <div id="actions" class="actions">
+          <button type="button" id="accept-btn" class="btn primary">Accept</button>
+          <button type="button" id="edit-btn" class="btn">Edit</button>
+          <button type="button" id="reject-btn" class="btn quiet">Reject, use my original</button>
+        </div>
+        <div id="edit-actions" class="actions" hidden>
+          <button type="button" id="save-edit-btn" class="btn primary">Search with my edit</button>
+          <button type="button" id="cancel-edit-btn" class="btn quiet">Cancel</button>
+        </div>
+        <p id="decision-error" class="error" role="alert" hidden></p>
+
+        <details class="trace">
+          <summary>How this query was processed</summary>
+          <ol id="steps" class="steps"></ol>
+        </details>
+      </article>
+
+      <article id="final" class="final" hidden aria-live="polite">
+        <p class="final-label" id="final-label"></p>
+        <p id="final-query" class="final-query"></p>
+        <p class="hint">Saved to your history and activity. Your search engine receives this query.</p>
+        <button type="button" id="new-search-btn" class="btn">New search</button>
+      </article>
+    </section>
+
+    <!-- ============================== Profile ============================= -->
+    <section id="panel-profile" role="tabpanel" aria-labelledby="tab-profile" hidden>
+      <div class="panel-head">
+        <h2 id="profile-heading">Profile</h2>
+        <button type="button" id="new-profile-btn" class="btn">New profile</button>
+      </div>
+      <p class="hint">Only role, location, interests, preferences and activity are used to add context. Name and email are never sent to the AI.</p>
+      <form id="profile-form" class="form" novalidate>
+        <div class="row">
+          <label><span>Name <span class="req" aria-hidden="true">*</span></span>
+            <input name="name" maxlength="100" required></label>
+          <label>Email
+            <input name="email" type="email" maxlength="255"></label>
+        </div>
+        <div class="row">
+          <label>Role or job title
+            <input name="role" maxlength="100" placeholder="e.g. Data analyst"></label>
+          <label>Location
+            <input name="location" maxlength="100" placeholder="e.g. Hyderabad, India"></label>
+        </div>
+        <label>Interests
+          <input name="interests" placeholder="Separate with commas: python, machine learning, tableau">
+        </label>
+        <label>Preferences
+          <textarea name="preferences" rows="3" placeholder="One per line: level = intermediate&#10;format = video"></textarea>
+        </label>
+        <p id="profile-error" class="error" role="alert" hidden></p>
+        <div class="actions">
+          <button type="submit" id="save-profile-btn" class="btn primary">Save profile</button>
+          <button type="button" id="delete-profile-btn" class="btn danger">Delete profile</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- ============================== Activity ============================ -->
+    <section id="panel-activity" role="tabpanel" aria-labelledby="tab-activity" hidden>
+      <div class="panel-head"><h2>Portal activity</h2></div>
+      <p class="hint">Recent activity helps fill in missing context. Your accepted searches are added here automatically.</p>
+      <form id="activity-form" class="activity-form" autocomplete="off">
+        <label class="visually-hidden" for="activity-type">Activity type</label>
+        <select id="activity-type">
+          <option value="view">Viewed</option>
+          <option value="search">Searched</option>
+          <option value="click">Opened</option>
+          <option value="download">Downloaded</option>
+          <option value="bookmark">Bookmarked</option>
+          <option value="enroll">Enrolled in</option>
+          <option value="purchase">Purchased</option>
+        </select>
+        <label class="visually-hidden" for="activity-content">What</label>
+        <input id="activity-content" maxlength="300" placeholder="e.g. Advanced SQL for analysts course" required>
+        <button type="submit" class="btn primary">Add activity</button>
+      </form>
+      <p id="activity-error" class="error" role="alert" hidden></p>
+      <ul id="activity-list" class="list"></ul>
+    </section>
+
+    <!-- ============================== History ============================= -->
+    <section id="panel-history" role="tabpanel" aria-labelledby="tab-history" hidden>
+      <div class="panel-head"><h2>Search history</h2></div>
+      <ul id="history-list" class="list"></ul>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status" hidden></div>
+  <script src="/app.js" defer></script>
+</body>
+</html>
